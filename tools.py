@@ -15,6 +15,11 @@ def bash(command:str)-> str:
     result=subprocess.run(command,shell=True,capture_output=True,text=True)
     return (result.stdout+result.stderr) or "no output"
 @tool
+def load_skill(name:str)-> str:
+    """ load skill with [name]"""
+    with open(f'{name}.md') as f:
+        return f.read()
+@tool
 def read_file(path:str)-> str:
     """ Read a file and return its content"""
     with open(path) as f:

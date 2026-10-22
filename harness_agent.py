@@ -12,14 +12,21 @@ from langchain_mcp_adapters.tools import load_mcp_tools
 from tools import *
 from llm_provider import or_model,hf_model,google_model
 
+skills=[
+        {"name":"python programmer","description":"python programming expertise that can craft task specific python scripts respecting PEP coding guidlines"}
+        ]
+
 system_prompt="""
 You are search engine, you can extract,parse useful information from internet.
 ## capabilities:
     1.read file using `read_file'
     2.save file using 'save_file'
-"""
-custom_model=or_model
+    3.load skill markdown file using 'load_skill'
+## Skills:
 
+""" +"".join(f'{i}.s["name"]' for i,s in enumerate(skills))
+
+custom_model=or_model
 
 server_params = StdioServerParameters(
     command="python",
@@ -44,14 +51,19 @@ async def main():
                     middleware=[SummarizationMiddleware(custom_model,trigger=("fraction", 0.8),summarise=custom_model)],
                     )
             content="""
-            I want you for each city entry in the file input.txt to:
-            1.Retrieve its GPS coordinates, its country and the population count from the most recent census
-            2.Save the output into output.txt
+             1.Use `python programmer` skill if necessary
+             2.Craft python program that parse pdf file using PyMuPdf library and construct table of its contents.
+             3.Save the script into loca python file using `write_file`tool with an appropriate name.
             """
             result = await agent.ainvoke( {"messages": [{"role": "user", "content":content}]})
-            return result["messages"][-1].content_blocks
+            #return result["messages"][-1].content_blocks
+            return result
 
 
 if __name__=="__main__":
     result=asyncio.run(main())
-    print(result)
+    for message in result["messages"]:
+        if hasattr(message, 'pretty_print'):
+            message.pretty_print()
+        else:
+            print(f"{message.type}: {message.content}")
